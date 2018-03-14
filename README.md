@@ -7,6 +7,9 @@
 See live demo [here](https://abarta.github.io/vue2-multi-uploader/demo/).
 
 ### Latest
+PostData and other changes contributed by [SergioReis97](https://github.com/SergioReis97) via PR. Thanks!
+Message props contributed by [Mushood](https://github.com/Mushood) via PR. Thank you!
+
 Optional `maxItems` prop added to allow setting a maximum number of files allowed per upload.  
 Default `maxItems` is set to 30.
 
@@ -41,6 +44,31 @@ npm install --save vue2-multi-uploader
 | maxItems | Number     |    no | 30
 | method | String     |    no | POST
 | postMeta | String, Array, Object     |    no | -
+| postData |  Object  |    no | -
+| showHttpMessages | Boolean     |    no | true
+| postHeader |  Object     |    no | null
+
+### Message Props
+All text in the component is also configurable. Below is the list of available props that can be configured, if necessary. Default values are provided for each prop.
+
+| Prop name         | Type            | Required    | Default  
+| -------------     |:-------------:  | -----:      | -----:|
+| headerMessage     | String          |    no       | Add files
+| dropAreaPrimaryMessage  | String    |    no       | Drop multiple files here.
+| dropAreaSecondaryMessage | String   |    no       | or click to upload
+| fileNameMessage   | String          |    no       | Names
+| fileSizeMessage   | String          |    no       | Sizes
+| totalFileMessage  | String          |    no       | Total files:
+| totalUploadSizeMessage | String     |    no       | Total upload size:
+| removeFileMessage | String          |    no       | Remove files
+| uploadButtonMessage  | String       |    no       | Upload
+| cancelButtonMessage | String        |    no       | Cancel
+| fileUploadErrorMessage   | String   |    no       | An error has occurred
+| minFilesErrorMessage   | String     |    no       | Minimum files that need to be added to uploader
+| maxFilesErrorMessage  | String      |    no       | Maximum files that can be added to uploader
+| retryErrorMessage | String          |    no       | Please remove the files and try again.
+| httpMethodErrorMessage | String     |    no       | This HTTP method is not allowed. Please use either 'put' or     'post' methods.
+
 
 #### postURL
 Set your POST url in the postURL prop.
@@ -55,7 +83,7 @@ Example template to use:
 <multiple-file-uploader postURL="http://.." successMessagePath="" errorMessagePath=""></multiple-file-uploader>
 ```
 Minimum items to upload (optional)
-You can modify the minimum number of files required for the upload to take place by changing the value of minItems prop. Default is set to 1. 
+You can modify the minimum number of files required for the upload to take place by changing the value of minItems prop. Default is set to 1.
 Here is an example template for uploading a minimum of 5 items and a maximum of 10 items:
 ``` html
 <multiple-file-uploader postURL="http://.." successMessagePath="" errorMessagePath="" :minItems="5" :maxItems="10"></multiple-file-uploader>
@@ -66,6 +94,15 @@ Axios, ES6-Promise
 ### CSS
 CSS style is not scoped so it's easy for you to overwrite your own style.
 Bootstrap CSS is used in demo but not required for the component.
+
+Class dropAreaDragging is active for giving some user feedback.
+Example:
+
+```
+.dropAreaDragging{
+   background-color:#ccc;
+}
+```
 
 ### LICENSE
 
@@ -91,4 +128,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-

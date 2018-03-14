@@ -1,44 +1,43 @@
 <template>
     <div class="uploadBox">
-        <h3>Add files</h3>
+        <h3>{{headerMessage}}</h3>
         <form role="form" enctype="multipart/form-data" @submit.prevent="onSubmit">
             <div class="uploadBoxMain" v-if="!itemsAdded">
                 <div class="form-group">
-                    <div class="dropArea" @ondragover="onChange">
-                        Drop multiple files here.
+                    <div class="dropArea" @ondragover="onChange" :class="dragging ? 'dropAreaDragging' : ''" @dragenter="dragging=true" @dragend="dragging=false" @dragleave="dragging=false">
+                        <h3>{{dropAreaPrimaryMessage}}</h3>
                         <input type="file" id="items" name="items[]" required multiple @change="onChange">
-                        <p class="help-block">Space for your instructions</p>
+                        <p class="help-block">{{dropAreaSecondaryMessage}}</p>
                     </div>
                 </div>
             </div>
             <div class="uploadBoxMain" v-else>
-                <p><strong>Names</strong></p>
+                <p><strong>{{fileNameMessage}}</strong></p>
                 <ol>
                     <li v-for="name in itemsNames">{{name}}</li>
                 </ol>
-                <p><strong>Sizes</strong></p>
+                <p><strong>{{fileSizeMessage}}</strong></p>
                 <ol>
                     <li v-for="size in itemsSizes">{{size}}</li>
                 </ol>
-                <p><strong>Total files:</strong> {{itemsAdded}}</p>
-                <p><strong>Total upload size:</strong> {{itemsTotalSize}}</p>
-                <button @click="removeItems">Remove files</button>
-                <!-- Loader -->
+                <p><strong>{{totalFileMessage}}</strong> {{itemsAdded}}</p>
+                <p><strong>{{totalUploadSizeMessage}}</strong> {{itemsTotalSize}}</p>
+                <button @click="removeItems">{{removeFileMessage}}</button>
                 <div class="loader" v-if="isLoaderVisible">
                     <div class="loaderImg"></div>
                 </div>
-                <!-- End Loader -->
             </div>
             <div>
                 <button type="submit" class="btn btn-primary btn-black btn-round" :disabled="itemsAdded < minItems || itemsAdded > maxItems">
-                    Upload</button>
-                <button type="button" class="btn btn-default btn-round" @click="removeItems">Cancel</button>
+                    {{uploadButtonMessage}}
+                </button>
+                <button type="button" class="btn btn-default btn-round" @click="removeItems">{{cancelButtonMessage}}</button>
             </div>
             <br>
             <div class="successMsg" v-if="successMsg !== ''">{{successMsg}}</div>
-            <div class="errorMsg" v-if="errorMsg !== ''">An error has occurred:<br>{{errorMsg}}</div>
-            <div class="errorMsg" v-if="itemsAdded && itemsAdded < minItems">Minimum {{minItems}} files need to be added to uploader. Please remove the files and try again.</div>
-            <div class="errorMsg" v-if="itemsAdded && itemsAdded > maxItems">A maximum of {{maxItems}} files can be uploaded each time. Please remove the files and try again.</div>
+            <div class="errorMsg" v-if="errorMsg !== ''">{{fileUploadErrorMessage}}:<br>{{errorMsg}} <br>{{retryErrorMessage}}</div>
+            <div class="errorMsg" v-if="itemsAdded && itemsAdded < minItems">{{minFilesErrorMessage}}: {{minItems}}.  <br>{{retryErrorMessage}} </div>
+            <div class="errorMsg" v-if="itemsAdded && itemsAdded > maxItems">{{maxFilesErrorMessage}}: {{maxItems}}.  <br>{{retryErrorMessage}}</div>
         </form>
     </div>
 </template>
@@ -70,6 +69,14 @@ export default {
             type: [String, Array, Object],
             default: ''
         },
+        postData: {
+            type: [Object],
+            default: () => {}
+        },
+        postHeader:{
+          type: [Object],
+          default: () => {}
+        },
         successMessagePath: {
             type: String,
             required: true
@@ -77,6 +84,70 @@ export default {
         errorMessagePath: {
             type: String,
             required: true
+        },
+        headerMessage: {
+          type: String,
+          default: 'Add files'
+        },
+        dropAreaPrimaryMessage: {
+          type: String,
+          default: 'Drop multiple files here'
+        },
+        dropAreaSecondaryMessage: {
+          type: String,
+          default: 'or click to upload'
+        },
+        fileNameMessage: {
+          type: String,
+          default: 'Names'
+        },
+        fileSizeMessage: {
+          type: String,
+          default: 'Sizes'
+        },
+        totalFileMessage: {
+          type: String,
+          default: 'Total files:'
+        },
+        totalUploadSizeMessage: {
+          type: String,
+          default: 'Total upload size:'
+        },
+        removeFileMessage: {
+          type: String,
+          default: 'Remove files'
+        },
+        uploadButtonMessage: {
+          type: String,
+          default: 'Upload'
+        },
+        cancelButtonMessage: {
+          type: String,
+          default: 'Cancel'
+        },
+        fileUploadErrorMessage: {
+          type: String,
+          default: 'An error has occurred'
+        },
+        minFilesErrorMessage: {
+          type: String,
+          default: 'Minimum files that need to be added to uploader'
+        },
+        maxFilesErrorMessage:  {
+          type: String,
+          default: 'Maximum files that can be added to uploader'
+        },
+        retryErrorMessage: {
+          type: String,
+          default: 'Please remove the files and try again.'
+        },
+        httpMethodErrorMessage: {
+          type: String,
+          default: "This HTTP method is not allowed. Please use either 'put' or 'post' methods."
+        },
+        showHttpMessages: {
+          type: Boolean,
+          default: true
         }
     },
 
@@ -85,6 +156,7 @@ export default {
      */
     data() {
         return {
+            dragging: false,
             items: [],
             itemsAdded: '',
             itemsNames: [],
@@ -132,6 +204,7 @@ export default {
             this.itemsNames = [];
             this.itemsSizes = [];
             this.itemsTotalSize = '';
+            this.dragging = false;
         },
 
         onSubmit() {
@@ -141,22 +214,31 @@ export default {
                 (typeof this.postMeta === 'object' && Object.keys(this.postMeta).length > 0)) {
                 this.formData.append('postMeta', this.postMeta);
             }
+            
+            if(typeof this.postData ==='object' && this.postData !== null && Object.keys(this.postData).length > 0){
+              for(var key in this.postData){
+                this.formData.append(key, this.postData[key]);
+              }
+            }
 
             if (this.method === 'put' || this.method === 'post' ) {
-                axios({method: this.method, url: this.postURL, data: this.formData})
+                axios({method: this.method, url: this.postURL, data: this.formData,headers:this.postHeader})
                     .then((response) => {
                         this.isLoaderVisible = false;
                         // Show success message
-                        this.successMsg = response + "." + this.successMessagePath;
+                        if(this.showHttpMessages)
+                          this.successMsg = response + "." + this.successMessagePath;
                         this.removeItems();
                     })
                     .catch((error) => {
                         this.isLoaderVisible = false;
-                        this.errorMsg = error + "." + this.errorMessagePath;
+                        if(this.showHttpMessages)
+                          this.errorMsg = error + "." + this.errorMessagePath;
                         this.removeItems();
                     });
             } else {
-                this.errorMsg = "This HTTP method is not allowed. Please use either 'put' or 'post' methods.";
+                if(this.showHttpMessages)
+                this.errorMsg = this.httpMethodErrorMessage;
                 this.removeItems();
             }
         },
@@ -249,4 +331,3 @@ export default {
     color: #3c763d;
 }
 </style>
-
