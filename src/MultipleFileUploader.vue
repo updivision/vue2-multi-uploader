@@ -22,7 +22,7 @@
                 </ol>
                 <p><strong>{{totalFileMessage}}</strong> {{itemsAdded}}</p>
                 <p><strong>{{totalUploadSizeMessage}}</strong> {{itemsTotalSize}}</p>
-                <button @click="removeItems">{{removeFileMessage}}</button>
+                <button type="button" @click="removeItems">{{removeFileMessage}}</button>
                 <div class="loader" v-if="isLoaderVisible">
                     <div class="loaderImg"></div>
                 </div>
