@@ -31,7 +31,7 @@
                 <button type="submit" class="btn btn-primary btn-black btn-round" :disabled="itemsAdded < minItems || itemsAdded > maxItems">
                     {{uploadButtonMessage}}
                 </button>
-                <button type="button" class="btn btn-default btn-round" @click="removeItems">{{cancelButtonMessage}}</button>
+                <button type="button" class="btn btn-default btn-round" @click="cancelButton">{{cancelButtonMessage}}</button>
             </div>
             <br>
             <div class="successMsg" v-if="successMsg !== ''">{{successMsg}}</div>
@@ -197,7 +197,10 @@ export default {
             }
             this.itemsTotalSize = this.bytesToSize(fileSizes);
         },
-
+        cancelButton(){
+            this.removeItems();
+            this.$emit('cancel-button');
+        },
         removeItems() {
             this.items = '';
             this.itemsAdded = '';
