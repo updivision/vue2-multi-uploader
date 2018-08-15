@@ -101,6 +101,8 @@ Fires `upload-success` or `upload-error` respectively. Success handler receives 
 	...
 ```
 
+Fires `cancel-button` without parameters.
+
 ### Dependencies
 Axios, ES6-Promise
 
