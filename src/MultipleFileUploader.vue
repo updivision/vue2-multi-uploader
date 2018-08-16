@@ -20,8 +20,8 @@
                 <ol>
                     <li v-for="size in itemsSizes">{{size}}</li>
                 </ol>
-                <p><strong>{{totalFileMessage}}</strong> {{itemsAdded}}</p>
-                <p><strong>{{totalUploadSizeMessage}}</strong> {{itemsTotalSize}}</p>
+                <p v-if="maxItems > 1"><strong>{{totalFileMessage}}</strong> {{itemsAdded}}</p>
+                <p v-if="maxItems > 1"><strong>{{totalUploadSizeMessage}}</strong> {{itemsTotalSize}}</p>
                 <button type="button" @click="removeItems">{{removeFileMessage}}</button>
                 <div class="loader" v-if="isLoaderVisible">
                     <div class="loaderImg"></div>
