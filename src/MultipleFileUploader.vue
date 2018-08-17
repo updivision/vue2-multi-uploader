@@ -22,16 +22,16 @@
                 </ol>
                 <p v-if="maxItems > 1"><strong>{{totalFileMessage}}</strong> {{itemsAdded}}</p>
                 <p v-if="maxItems > 1"><strong>{{totalUploadSizeMessage}}</strong> {{itemsTotalSize}}</p>
-                <button id="resetButton" type="button" @click="removeItems">{{removeFileMessage}}</button>
+                <button id="resetButtonId" type="button" @click="removeItems">{{removeFileMessage}}</button>
                 <div class="loader" v-if="isLoaderVisible">
                     <div class="loaderImg"></div>
                 </div>
             </div>
             <div>
-                <button id="submitButton" type="submit" class="btn btn-primary btn-black btn-round" :disabled="itemsAdded < minItems || itemsAdded > maxItems">
+                <button id="submitButtonId" type="submit" class="btn btn-primary btn-black btn-round" :disabled="itemsAdded < minItems || itemsAdded > maxItems">
                     {{uploadButtonMessage}}
                 </button>
-                <button id="cancelButton" type="button" class="btn btn-default btn-round" @click="cancelButton">{{cancelButtonMessage}}</button>
+                <button id="cancelButtonId" type="button" class="btn btn-default btn-round" @click="cancelButton">{{cancelButtonMessage}}</button>
             </div>
             <br>
             <div class="successMsg" v-if="successMsg !== ''">{{successMsg}}</div>
