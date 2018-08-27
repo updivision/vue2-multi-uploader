@@ -1,12 +1,12 @@
 {
-  "name": "vue2-multi-uploader",
+  "name": "@updivision/vue2-multi-uploader",
   "description": "Drag and drop multiple file uploader with Vue.js v2 and Axios",
   "version": "1.6.0",
-  "author": "Andrei Barta @ UPDIVISION",
+  "author": "UPDIVISION",
   "main": "dist/build.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:abarta/vue2-multi-uploader.git"
+    "url": "git+https://github.com/updivision/vue2-multi-uploader.git"
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
@@ -16,6 +16,10 @@
     "axios": "^0.15.3",
     "es6-promise": "~4.1.0"
   },
+  "bugs": {
+    "url": "https://github.com/updivision/vue2-multi-uploader/issues"
+  },
+  "homepage": "https://github.com/updivision/vue2-multi-uploader#readme",
   "devDependencies": {
     "vue": "^2.2.1",
     "babel-core": "^6.0.0",

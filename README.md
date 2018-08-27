@@ -4,7 +4,7 @@
  setting a minimum required number of files to upload.
 
 ### Demo
-See live demo [here](https://abarta.github.io/vue2-multi-uploader/demo/).
+See live demo [here](https://updivision.github.io/vue2-multi-uploader/).
 
 ### Latest
 PostData and other changes contributed by [SergioReis97](https://github.com/SergioReis97) via PR. Thanks!
@@ -88,6 +88,19 @@ Here is an example template for uploading a minimum of 5 items and a maximum of 
 ``` html
 <multiple-file-uploader postURL="http://.." successMessagePath="" errorMessagePath="" :minItems="5" :maxItems="10"></multiple-file-uploader>
 ```
+### Events
+Fires `upload-success` or `upload-error` respectively. Success handler receives axios response object. Error handler receives axios error object.
+```html
+<multiple-file-uploader postURL="http://.." successMessagePath="" errorMessagePath="" @upload-success='success_handler'></multiple-file-uploader>
+```
+```javascript
+	...
+	success_handler: function(response){
+
+	},
+	...
+```
+
 ### Dependencies
 Axios, ES6-Promise
 
@@ -109,7 +122,7 @@ Example:
 ---
 The MIT License (MIT)
 
-Copyright (c) 2017 Andrei Barta @ UPDIVISION
+Copyright (c) 2018 UPDIVISION
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
