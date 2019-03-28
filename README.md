@@ -3,6 +3,10 @@
 > A drag and drop multiple file uploader component that uses Vue.js v2 and Axios. Uploader shows file names, sizes and total size of files added. It also allows
  setting a minimum required number of files to upload.
 
+### About this fork by Chupzzz
+
+Original component by *updivision* worked fine except of *successMessagePath/errorMessagePath* props and *upload-success* event - all of them wasn't working properly. So this fork has this issues fixed. Pull request to updivision has been sent.
+
 ### Demo
 See live demo [here](https://updivision.github.io/vue2-multi-uploader/).
 

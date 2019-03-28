@@ -227,13 +227,14 @@ export default {
                         this.isLoaderVisible = false;
                         // Show success message
                         if(this.showHttpMessages)
-                          this.successMsg = response + "." + this.successMessagePath;
+                          this.successMsg = response.data[this.successMessagePath];
                         this.removeItems();
+                        this.$emit('upload-success', response);
                     })
                     .catch((error) => {
                         this.isLoaderVisible = false;
                         if(this.showHttpMessages)
-                          this.errorMsg = error + "." + this.errorMessagePath;
+                          this.errorMsg = error.data[this.errorMessagePath];
                         this.removeItems();
                     });
             } else {
