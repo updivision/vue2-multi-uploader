@@ -1,7 +1,7 @@
 <template>
   <div class="uploadBox">
     <form role="form" enctype="multipart/form-data" @submit.prevent="onSubmit">
-      <div class="uploadBoxMain" v-if="!itemsAdded">
+      <div class="uploadBoxMain" v-if="itemsAdded < 0">
         <div class="form-group">
           <div
             class="dropArea"
@@ -22,6 +22,9 @@
             />
           </div>
         </div>
+        <div class="loader" v-if="isLoaderVisible">
+          <div class="loaderImg"></div>
+        </div>
       </div>
       <div class="uploadBoxMain" v-else>
         <p>
@@ -29,13 +32,15 @@
         </p>
         <ol>
           <li v-for="item in itemDetails" v-bind:key="item">
-            {{ item.name }} ({{ item.size }}) <br />
-            {{ item.hash }}
+            <span v-bind:class="{ 'text-danger': item.filtered }">
+              {{ item.name }} <br />
+              {{ item.size }} <br />
+              {{ item.hash.length === 64 ? item.hash : 'calculating hash' }}
+            </span>
           </li>
         </ol>
         <p><strong>Total files:</strong> {{ itemsAdded }}</p>
         <p><strong>Total upload size:</strong> {{ itemsTotalSize }}</p>
-        <button @click="removeItems">Remove files</button>
         <div class="loader" v-if="isLoaderVisible">
           <div class="loaderImg"></div>
         </div>
@@ -44,7 +49,7 @@
         <button
           type="submit"
           class="btn btn-primary btn-black btn-round"
-          :disabled="!itemsAdded"
+          :disabled="itemsAdded <= 0 || isLoaderVisible"
         >
           Upload
         </button>
@@ -70,7 +75,7 @@
 <script>
 import axios from 'axios'
 import CryptoJS from 'crypto-js'
-require('es6-promise').polyfill()
+// require('es6-promise').polyfill()
 
 var chunkSize = 1024 * 1024 // bytes
 var timeout = 10 // millisec
@@ -78,11 +83,15 @@ var lastOffset = 0
 var chunkReorder = 0
 var chunkTotal = 0
 
-component: {
-  axios
-}
+// component: {
+//   axios
+// }
 export default {
   props: {
+    filterItemsUrl: {
+      type: String,
+      required: false
+    },
     postURL: {
       type: String,
       required: true
@@ -121,25 +130,37 @@ export default {
     }
   },
 
-  /*
-   * The component's data.
-   */
   data () {
     return {
       dragging: false,
       items: [],
-      itemsAdded: '',
       itemDetails: [],
-      itemsTotalSize: '',
-      formData: '',
+      formData: [],
       successMsg: '',
       errorMsg: '',
       isLoaderVisible: false
     }
   },
 
+  computed: {
+    itemsTotalSize: function () {
+      return this.bytesToSize(
+        this.itemDetails
+          .filter(i => i.filtered !== true)
+          .map(i => i.bytes)
+          .reduce((a, b) => a + b, 0)
+      )
+    },
+    itemsAdded: function () {
+      if (this.itemDetails.length > 0) {
+        return this.itemDetails.filter(i => i.filtered !== true).length
+      } else {
+        return -1
+      }
+    }
+  },
+
   methods: {
-    // http://scratch99.com/web-development/javascript/convert-bytes-to-mb-kb/
     bytesToSize (bytes) {
       const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
       if (bytes === 0) return 'n/a'
@@ -149,33 +170,56 @@ export default {
     },
 
     onChange (e) {
+      this.isLoaderVisible = true
+      self = this
       this.successMsg = ''
       this.errorMsg = ''
       this.formData = new FormData()
+      var localItems = []
       const files = e.target.files || e.dataTransfer.files
-      this.itemsAdded = files.length
-      let fileSizes = 0
       for (const x in files) {
         if (!isNaN(x)) {
           this.items = e.target.files[x] || e.dataTransfer.files[x]
-          var fileHash = this.hashFile(files[x])
           this.itemDetails[x] = {
             name: files[x].name,
+            bytes: files[x].size,
             size: this.bytesToSize(files[x].size),
-            hash: '000000'
+            hash: this.hashFile(files[x]),
+            filtered: null
           }
-          fileSizes += files[x].size
-          this.formData.append('items[]', this.items)
+          // this.formData.append('items[]', this.items)
+          localItems.push(this.items)
         }
       }
-      this.itemsTotalSize = this.bytesToSize(fileSizes)
+      const promises = this.itemDetails.map(i => i.hash)
+      Promise.all(promises).then(function (values) {
+        self.itemDetails.forEach((item, index) => {
+          item.hash = values[index]
+        })
+        if (self.filterItemsUrl) {
+          axios
+            .post(
+              self.filterItemsUrl,
+              'X-Fotrino-Item-Details=' + JSON.stringify(self.itemDetails)
+            )
+            .then(filteredItems => {
+              filteredItems.data.forEach((item, index) => {
+                if (item.filtered !== true) {
+                  self.formData.append('items[]', localItems[index])
+                }
+              })
+              self.itemDetails = filteredItems.data
+              self.isLoaderVisible = false
+            })
+        } else {
+          self.isLoaderVisible = false
+        }
+      })
     },
 
     removeItems () {
       this.items = ''
-      this.itemsAdded = ''
       this.itemDetails = []
-      this.itemsTotalSize = ''
       this.dragging = false
     },
 
@@ -227,21 +271,12 @@ export default {
         this.removeItems()
       }
     },
-    // Hashing!
 
+    // Hashing!
     // time reordering
     callbackRead (reader, file, evt, callbackProgress, callbackFinal) {
       self = this
       if (lastOffset === reader.offset) {
-        // console.log(
-        //   '[',
-        //   reader.size,
-        //   ']',
-        //   reader.offset,
-        //   '->',
-        //   reader.offset + reader.size,
-        //   ''
-        // )
         lastOffset = reader.offset + reader.size
         callbackProgress(evt.target.result)
         if (reader.offset + reader.size >= file.size) {
@@ -250,15 +285,6 @@ export default {
         }
         chunkTotal++
       } else {
-        // console.log(
-        //   '[',
-        //   reader.size,
-        //   ']',
-        //   reader.offset,
-        //   '->',
-        //   reader.offset + reader.size,
-        //   'wait'
-        // )
         setTimeout(function () {
           self.callbackRead(reader, file, evt, callbackProgress, callbackFinal)
         }, timeout)
@@ -267,37 +293,30 @@ export default {
     },
 
     hashFile (file) {
-      if (file === undefined) {
-        return
-      }
-      var SHA256 = CryptoJS.algo.SHA256.create()
-      var counter = 0
-      var self = this
-
-      this.loading(
-        file,
-        function (data) {
-          var wordBuffer = CryptoJS.lib.WordArray.create(data)
-          SHA256.update(wordBuffer)
-          counter += data.byteLength
-          // console.log((( counter / file.size)*100).toFixed(0) + '%');
-        },
-        function (data) {
-          // console.log('100%');
-          var encrypted = SHA256.finalize().toString()
-          console.log('HASH: ' + encrypted)
+      return new Promise((resolve, reject) => {
+        if (file === undefined) {
+          reject('undefined file object')
         }
-      )
+        var SHA256 = CryptoJS.algo.SHA256.create()
+        var counter = 0
+        var self = this
+
+        this.loading(
+          file,
+          function (data) {
+            var wordBuffer = CryptoJS.lib.WordArray.create(data)
+            SHA256.update(wordBuffer)
+            counter += data.byteLength
+          },
+          function (data) {
+            var encrypted = SHA256.finalize().toString()
+            resolve(encrypted)
+          }
+        )
+      })
     },
 
-    // clear () {
-    //   lastOffset = 0
-    //   chunkReorder = 0
-    //   chunkTotal = 0
-    // },
-
     loading (file, callbackProgress, callbackFinal) {
-      // var chunkSize  = 1024*1024; // bytes
       var offset = 0
       var size = chunkSize
       var partial
@@ -322,33 +341,6 @@ export default {
         index += 1
       }
     }
-
-    // Array.prototype.remove =
-    //   Array.prototype.remove ||
-    //   function (val) {
-    //     var i = this.length
-    //     while (i--) {
-    //       if (this[i] === val) {
-    //         this.splice(i, 1)
-    //       }
-    //     }
-    //   }
-
-    // humanFileSize (bytes, si) {
-    //   var thresh = si ? 1000 : 1024
-    //   if (Math.abs(bytes) < thresh) {
-    //     return bytes + ' B'
-    //   }
-    //   var units = si
-    //     ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-    //     : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-    //   var u = -1
-    //   do {
-    //     bytes /= thresh
-    //     ++u
-    //   } while (Math.abs(bytes) >= thresh && u < units.length - 1)
-    //   return bytes.toFixed(1) + ' ' + units[u]
-    // }
   }
 }
 </script>
