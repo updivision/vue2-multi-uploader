@@ -147,7 +147,7 @@ export default {
         },
         showHttpMessages: {
           type: Boolean,
-          default: true
+          default: false
         }
     },
 
@@ -225,9 +225,10 @@ export default {
                 axios({method: this.method, url: this.postURL, data: this.formData,headers:this.postHeader})
                     .then((response) => {
                         this.isLoaderVisible = false;
+                        Bus.$emit('upload-success');
                         // Show success message
                         if(this.showHttpMessages)
-                          this.successMsg = response + "." + this.successMessagePath;
+                          this.successMsg = response + this.successMessagePath;
                         this.removeItems();
                     })
                     .catch((error) => {
